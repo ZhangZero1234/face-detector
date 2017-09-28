@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		*{
+			margin:0px;
+			padding: 0px;
+		}
+		video{
+			display: block;
+			border:1px solid;
+		}
+		button{
+			margin-top: 10px;
+			line-height: 20px;
+			padding: 0 10px;
+		}
+
+		.show{
+			/*margin-top: 20px;*/
+			
+			width: 200px;
+			height: 150px;
+			border:1px solid;
+		}
+		
+	</style>
+</head>		
+<body>
+<div style="vertical-align: middle;display: inline-block; margin-left: 20px;margin-top: 20px;">
+	<video class="capture" src="" style="height: 200px;width:200px;"></video>
+	<button class="invoke">开启摄像头</button>
+	<button class="snapshot">snapshot</button>
+
+</div>
+<div style="vertical-align: middle;display: inline-block;">
+	<div class="show"></div>
+	<button class="save">Login</button>
+</body>
+</div>
+
+<script>
+	var invoke = document.querySelector(".invoke");
+	var capture = document.querySelector(".capture");
+	var snapshot = document.querySelector(".snapshot");
+	var show = document.querySelector(".show");
+	var canvas = document.createElement("canvas");
+	var image = document.createElement("img");
+	var save = document.querySelector(".save");
+	invoke.onclick = invokeRadio;
+	snapshot.onclick = snapShot;
+	save.onclick = Save;
+	function invokeRadio(){
+		console.log(0);
+		window.navigator.getUserMedia({
+			'video':true
+		},getRadioStream,getRadioError);
+	}
+	function getRadioStream(stream){
+		console.log(stream);
+		capture.src = window.URL.createObjectURL(stream)||stream;
+	}
+	function getRadioError(err){
+		console.log("error" + err);
+	}
+
+	function snapShot(){
+		var ctx = canvas.getContext("2d");
+		ctx.drawImage(capture,0,0,200,150);
+		image.src = canvas.toDataURL();//js 将图片转成base64
+		show.appendChild(image);
+	}
+	function Save(){
+		// console.log(canvas.toDataURL());
+		// var buffer = canvas.toDataURL().split(",")[1];
+		var buffer = canvas.toDataURL();
+		// console.log(buffer);
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST',"./upload",true);
+		xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+		xhr.onreadystatechange = function(){
+			if(xhr.readyState == 4 && /^2\d{2}$/.test(xhr.status))
+			{
+				var obj = JSON.parse(xhr.responseText).result[0];
+				
+				try{
+					if("score" in obj){
+						var score = JSON.parse(xhr.responseText).result[0].score;
+						console.log(score);
+						if(score>88){alert("登录成功")}
+						else{
+							alert("登录失败");
+						}
+					}	
+				}
+				catch(e){
+					alert("登录失败");
+				}
+			}
+		}
+		xhr.send("base64="+buffer);
+	}
+
+</script>
+</html>
